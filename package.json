@@ -1,0 +1,156 @@
+{
+  "name": "codesculptor",
+  "displayName": "Code Sculptor",
+  "description": "Improve user experience while coding",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=16.17.1",
+    "vscode": "^1.87.0"
+  },
+  "extensionDependencies": [
+    "ms-python.python"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codesculptor.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "codesculptor.server.restart",
+        "title": "Restart Language Server",
+        "category": "CodeSculptor"
+      },
+      {
+        "command": "codesculptor.server.executeCommand",
+        "title": "Execute Command",
+        "category": "CodeSculptor"
+      }
+    ],
+    "configuration": [
+      {
+        "type": "object",
+        "title": "Json Server Configuration",
+        "properties": {
+          "codesculptor.jsonServer.exampleConfiguration": {
+            "scope": "resource",
+            "type": "string",
+            "default": "You can override this message"
+          }
+        }
+      },
+      {
+        "type": "object",
+        "title": "Server Configuration",
+        "properties": {
+          "codesculptor.server.cwd": {
+            "scope": "resource",
+            "type": "string",
+            "description": "The working directory from which to launch the server.",
+            "markdownDescription": "The working directory from which to launch the server.\nIf blank, this will default to the `examples/servers` directory."
+          },
+          "codesculptor.server.debug": {
+            "scope": "resource",
+            "default": true,
+            "type": "boolean",
+            "description": "Enable debugging of the server process."
+          },
+          "codesculptor.server.debugHost": {
+            "scope": "resource",
+            "default": "localhost",
+            "type": "string",
+            "description": "The host on which the server process to debug is running."
+          },
+          "codesculptor.server.debugPort": {
+            "scope": "resource",
+            "default": 5678,
+            "type": "integer",
+            "description": "The port number on which the server process to debug is listening."
+          },
+          "codesculptor.server.launchScript": {
+            "scope": "resource",
+            "type": "string",
+            "default": "code_completion.py",
+            "description": "The python script to run when launching the server.",
+            "markdownDescription": "The python script to run when launching the server.\n Relative to #codesculptor.server.cwd#"
+          },
+          "codesculptor.server.pythonPath": {
+            "scope": "resource",
+            "type": "string",
+            "default": "",
+            "description": "The python interpreter to use to run the server.\nBy default, this extension will attempt to use the Python interpreter configured via the Python extension, setting this setting will override this behavior."
+          },
+          "codesculptor.trace.server": {
+            "scope": "resource",
+            "type": "string",
+            "default": "off",
+            "enum": [
+              "off",
+              "messages",
+              "verbose"
+            ],
+            "description": "Controls if LSP messages send to/from the server should be logged.",
+            "enumDescriptions": [
+              "do not log any lsp messages",
+              "log all lsp messages sent to/from the server",
+              "log all lsp messages sent to/from the server, including their contents"
+            ]
+          }
+        }
+      },
+      {
+        "type": "object",
+        "title": "Client Configuration",
+        "properties": {
+          "codesculptor.client.documentSelector": {
+            "scope": "window",
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "default": [
+              {
+                "scheme": "file",
+                "language": "plaintext"
+              }
+            ],
+            "description": "The client uses this to decide which documents the server is able to help with.",
+            "markdownDescription": "The client uses this to decide which documents the server is able to help with.\n See [DocumentSelector](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#documentFilter) in the LSP Specification for more details."
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.6",
+    "@types/node": "18.x",
+    "@types/semver": "^7.5.8",
+    "@types/vscode": "^1.88.0",
+    "@typescript-eslint/eslint-plugin": "^7.4.0",
+    "@typescript-eslint/parser": "^7.4.0",
+    "@vscode/test-cli": "^0.0.8",
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@vscode/python-extension": "^1.0.5",
+    "semver": "^7.6.0",
+    "vscode-languageclient": "^9.0.1"
+  }
+}

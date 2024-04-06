@@ -1,0 +1,21 @@
+{
+    // Uncomment to override Python interpreter used.
+    // "pygls.server.pythonPath": "/path/to/python",
+    "codesculptor.server.debug": true,
+    // "pygls.server.debugHost": "localhost",
+    // "pygls.server.debugPort": 5678,
+    "codesculptor.server.launchScript": "code_actions.py",
+    "codesculptor.trace.server": "off",
+    "codesculptor.client.documentSelector": [
+        {
+            "scheme": "file",
+            "language": "plaintext"
+        }
+        // Uncomment to use code_actions or inlay_hints servers
+        // {
+        //     "scheme": "file",
+        //     "language": "plaintext"
+        // }
+    ],
+    // "pygls.jsonServer.exampleConfiguration": "some value here",
+}

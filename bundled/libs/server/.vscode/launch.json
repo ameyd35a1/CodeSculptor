@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "codesculptor: Debug Server",
+            "type": "debugpy",
+            "request": "attach",
+            "connect": {
+                "host": "${config:codesculptor.server.debugHost}",
+                "port": "${config:codesculptor.server.debugPort}"
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
+            ],
+            "justMyCode": true
+        }
+    ]
+}

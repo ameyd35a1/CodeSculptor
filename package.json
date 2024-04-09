@@ -20,10 +20,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "codesculptor.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "codesculptor.server.restart",
         "title": "Restart Language Server",
         "category": "CodeSculptor"
@@ -32,8 +28,25 @@
         "command": "codesculptor.server.executeCommand",
         "title": "Execute Command",
         "category": "CodeSculptor"
-      }
+      },
+      {
+        "command": "codesculptor.generateTestCase",
+        "title": "CodeSculptor: Generate Unit Test Case",
+        "category": "CodeSculptor"
+      },
+      {
+				"command": "codesculptor.startTask",
+				"title": "Load Model"
+			}
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codesculptor.generateTestCase",
+          "group": "CodeSculptor"
+        }
+      ]
+    },
     "configuration": [
       {
         "type": "object",
@@ -90,7 +103,7 @@
           "codesculptor.trace.server": {
             "scope": "resource",
             "type": "string",
-            "default": "off",
+            "default": "verbose",
             "enum": [
               "off",
               "messages",

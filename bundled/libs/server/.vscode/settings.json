@@ -2,9 +2,9 @@
     // Uncomment to override Python interpreter used.
     // "pygls.server.pythonPath": "/path/to/python",
     "codesculptor.server.debug": true,
-    // "pygls.server.debugHost": "localhost",
-    // "pygls.server.debugPort": 5678,
-    "codesculptor.server.launchScript": "code_actions.py",
+    "codesculptor.server.debugHost": "localhost",
+    "codesculptor.server.debugPort": 5678,
+    //"codesculptor.server.launchScript": "code_actions.py",
     "codesculptor.trace.server": "off",
     "codesculptor.client.documentSelector": [
         {

@@ -42,6 +42,13 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     )
 
+    // Generate Unit Test case
+    context.subscriptions.push(
+        vscode.commands.registerCommand("codesculptor.generateTestCase", async () => {
+            await generateUnitTestCase()
+        })
+    )
+
     // Restart the language server if the user switches Python envs...
     context.subscriptions.push(
         python.environments.onDidChangeActiveEnvironmentPath(async () => {
@@ -94,6 +101,87 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     )
 
+    context.subscriptions.push(
+        vscode.languages.registerCompletionItemProvider('plaintext', {
+            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+
+                // a simple completion item which inserts `Hello World!`
+                const simpleCompletion = new vscode.CompletionItem('Hello World!');
+
+                // a completion item that inserts its text as snippet,
+                // the `insertText`-property is a `SnippetString` which will be
+                // honored by the editor.
+                const snippetCompletion = new vscode.CompletionItem('Good part of the day');
+                snippetCompletion.insertText = new vscode.SnippetString('Good ${1|morning,afternoon,evening|}. It is ${1}, right?');
+                const docs: any = new vscode.MarkdownString("Inserts a snippet that lets you select [link](x.ts).");
+                snippetCompletion.documentation = docs;
+                docs.baseUri = vscode.Uri.parse('http://example.com/a/b/c/');
+
+                // a completion item that can be accepted by a commit character,
+                // the `commitCharacters`-property is set which means that the completion will
+                // be inserted and then the character will be typed.
+                const commitCharacterCompletion = new vscode.CompletionItem('console');
+                commitCharacterCompletion.commitCharacters = ['.'];
+                commitCharacterCompletion.documentation = new vscode.MarkdownString('Press `.` to get `console.`');
+
+                // a completion item that retriggers IntelliSense when being accepted,
+                // the `command`-property is set which the editor will execute after 
+                // completion has been inserted. Also, the `insertText` is set so that 
+                // a space is inserted after `new`
+                const commandCompletion = new vscode.CompletionItem('new');
+                commandCompletion.kind = vscode.CompletionItemKind.Keyword;
+                commandCompletion.insertText = 'new ';
+                commandCompletion.command = { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions...' };
+
+                // return all completion items as array
+                return [
+                    simpleCompletion,
+                    snippetCompletion,
+                    commitCharacterCompletion,
+                    commandCompletion
+                ];
+            }
+        })
+    )
+
+    context.subscriptions.push(
+        vscode.languages.registerInlineCompletionItemProvider('plaintext', {
+            provideInlineCompletionItems(document: vscode.TextDocument, position: vscode.Position, context: vscode.InlineCompletionContext, token: vscode.CancellationToken) {
+                //provideInlineCompletionItems(document, position, context, token) {
+                const inlineCommand = new vscode.InlineCompletionItem("test command when triggered")
+
+                // return all completion items as array
+                return [
+                    inlineCommand
+                ];
+            }
+        })
+    )
+
+    context.subscriptions.push(vscode.commands.registerCommand('codesculptor.startTask', () => {
+        vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: "Loading Model!",
+            cancellable: true
+        }, async (progress, token) => {
+            token.onCancellationRequested(() => {
+                console.log("User canceled the long running operation");
+            });
+
+            progress.report({ increment: 30 });
+
+            const p = new Promise<void>(async (resolve) => {
+                if (!client || client.state !== State.Running) {
+                    await vscode.window.showErrorMessage("There is no language server running.")
+                    return
+                }
+                const result = await vscode.commands.executeCommand("initializeModel")
+                return resolve()
+            });
+
+            return p;
+        });
+    }));
 }
 
 // This method is called when your extension is deactivated
@@ -162,6 +250,7 @@ async function startLangServer() {
             logger.error(`There was a error starting the server: ${result.reason}`)
         }
     }
+    vscode.commands.executeCommand('codesculptor.startTask')
 }
 
 async function stopLangServer(): Promise<void> {
@@ -235,7 +324,29 @@ async function executeServerCommand() {
     logger.info(`${commandName} result: ${JSON.stringify(result, undefined, 2)}`)
 }
 
+async function generateUnitTestCase() {
+    if (!client || client.state !== State.Running) {
+        await vscode.window.showErrorMessage("There is no language server running.")
+        return
+    }
 
+    const editor = vscode.window.activeTextEditor;
+    const selection = editor?.selection;
+    if (selection && !selection.isEmpty) {
+        const selectionRange = new vscode.Range(selection.start.line, selection.start.character, selection.end.line, selection.end.character);
+        const highlighted = editor.document.getText(selectionRange);
+        logger.info(highlighted)
+
+        // Generate test case for selected text
+        const inputData:unknown = { text: highlighted, isSelection: true, language: 'python' }
+        const result = await vscode.commands.executeCommand("generateTestCase", inputData)
+        logger.info(JSON.stringify(result, undefined, 2))
+    } else {
+
+        const result = await vscode.commands.executeCommand("generateTestCase", { text: editor?.document.fileName, isSelection: false, language: 'python' })
+        logger.info(`codesculptor.generateTestCase result: ${JSON.stringify(result, undefined, 2)}`)
+    }
+}
 
 function getCwd(): string {
     const config = vscode.workspace.getConfiguration("codesculptor.server")

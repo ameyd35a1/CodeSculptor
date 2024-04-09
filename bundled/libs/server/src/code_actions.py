@@ -11,17 +11,31 @@ from lsprotocol.types import (
     TextEdit,
     WorkspaceEdit,
 )
-
+import logging
 
 ADDITION = re.compile(r"^\s*(\d+)\s*\+\s*(\d+)\s*=(?=\s*$)")
 server = LanguageServer("code-action-server", "v0.1")
 
+# console = logging.StreamHandler()
+# console.setLevel(level=logging.DEBUG)
+# logger = logging.getLogger("CodeActions")
+# logger.addHandler(console)
+
+# Create and configure logger
+logging.basicConfig(filename="newfile.log",
+                    format='%(asctime)s %(message)s',
+                    filemode='w')
+# Creating an object
+logger = logging.getLogger()
+# Setting the threshold of logger to DEBUG
+logger.setLevel(logging.DEBUG)
 
 @server.feature(
     TEXT_DOCUMENT_CODE_ACTION,
     CodeActionOptions(code_action_kinds=[CodeActionKind.RefactorInline]),
 )
 def code_actions(params: CodeActionParams):
+    logger.debug("Entered the function CodeActions")
     items = []
     document_uri = params.text_document.uri
     document = server.workspace.get_text_document(document_uri)

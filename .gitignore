@@ -7,4 +7,4 @@ node_modules
 /bundled/libs/*
 !/bundled/libs
 !bundled/libs/server
-
+/bundled/libs/server/src/__pycache__

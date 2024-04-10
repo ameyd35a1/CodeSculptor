@@ -49,10 +49,10 @@ def GenerateTestCase(ls, *args):
     logger.debug("called custom function")
     reqData = args[0]
     logger.debug(f"Arguments of ReqData: ${reqData[0]}")
-    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM"),True)
+    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM").replace("{language}", "Python"),True)
     testCase = ComputeModelInformation(data)
     logger.debug(testCase)
-    return "success"
+    return testCase
 
 
 #@server.thread()

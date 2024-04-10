@@ -38,6 +38,7 @@ def LoadModel():
     bnb_config = LoadConfig()
     model_id = "codellama/CodeLlama-7b-Instruct-hf"
     logger.debug("Loading Tokenizer...")
+    
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     logger.debug("Tokenizer loaded")
 
@@ -50,17 +51,25 @@ def LoadModel():
     logger.debug("Model loaded")
 
 def ComputeModelInformation(data: ComputeData):
+    global device
     PROMPT = f"<s>[INST] <<SYS>>\n{data.system}\n<</SYS>>\n\n{data.message}[/INST]"
     logger.debug(PROMPT)
 
     logger.debug("Tokenizing input content")
-    input_ids = tokenizer(PROMPT, return_tensors="pt")["input_ids"]
+    inputs = tokenizer(PROMPT, return_tensors="pt").to(device)
+    input_ids = inputs["input_ids"]
 
     logger.debug("Processing model...")
-    generated_ids = model.generate(input_ids, max_new_tokens=1024)
+    generated_ids = model.generate(
+        input_ids= input_ids,
+        attention_mask= inputs['attention_mask'],
+        pad_token_id=tokenizer.eos_token_id,
+        max_new_tokens= 1024
+    )
     
     logger.debug("Processing Output...")
-    outputResponse = tokenizer.decode(generated_ids[0], skip_special_tokens=True)
+    new_tokens = generated_ids[0][input_ids.shape[-1]:]
+    outputResponse = tokenizer.decode(new_tokens, skip_special_tokens=True)
     logger.debug(outputResponse)
 
     return outputResponse

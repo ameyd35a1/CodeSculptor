@@ -68,12 +68,12 @@ def SuggestCode(ls, *args):
 
 #@server.thread()
 @server.command(
-    'initializeModel'
+    'codesculptor.server.initializeModel'
 )
 def Initialize(ls, *args):
     LoadModel()
     logger.debug("Model initialized")
-    return "model initialized"
+    return "Model initialized"
 
 if __name__ == "__main__":
     server.start_io()

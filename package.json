@@ -131,7 +131,7 @@
             "default": [
               {
                 "scheme": "file",
-                "language": "plaintext"
+                "language": "*"
               }
             ],
             "description": "The client uses this to decide which documents the server is able to help with.",

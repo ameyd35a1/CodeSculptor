@@ -1,0 +1,3 @@
+py = Python
+js = JavaScript
+ts = TypeScript

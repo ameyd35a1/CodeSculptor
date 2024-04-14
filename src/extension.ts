@@ -8,24 +8,26 @@ import * as semver from "semver";
 import { PythonExtension } from "@vscode/python-extension";
 import { LanguageClient, LanguageClientOptions, ServerOptions, State, TransportKind, integer } from "vscode-languageclient/node";
 
+import { FileDetails } from "./types";
+
 const MIN_PYTHON = semver.parse("3.7.9")!;
 
 let client: LanguageClient;
 let clientStarting = false;
 let python: PythonExtension
 let logger: vscode.LogOutputChannel
+let languages: Map<string, string>
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
 export async function activate(context: vscode.ExtensionContext) {
     logger = vscode.window.createOutputChannel('Code Sculptor', { log: true })
-    logger.info("Extension activated.")
-
-    vscode.window.showInformationMessage("Code Sculptor activated!")
     await getPythonExtension();
     if (!python) {
         return
     }
+
+    loadLanguageMappingConfig()
 
     // Restart language server command
     context.subscriptions.push(
@@ -145,15 +147,41 @@ export async function activate(context: vscode.ExtensionContext) {
     )
 
     context.subscriptions.push(
-        vscode.languages.registerInlineCompletionItemProvider('plaintext', {
-            provideInlineCompletionItems(document: vscode.TextDocument, position: vscode.Position, context: vscode.InlineCompletionContext, token: vscode.CancellationToken) {
+        vscode.languages.registerInlineCompletionItemProvider('*', {
+            async provideInlineCompletionItems(document: vscode.TextDocument, position: vscode.Position, context: vscode.InlineCompletionContext, token: vscode.CancellationToken) {
                 //provideInlineCompletionItems(document, position, context, token) {
-                const inlineCommand = new vscode.InlineCompletionItem("test command when triggered")
+                let inlineCommand = null //new vscode.InlineCompletionItem("test command when triggered")
+                const activeEditor = vscode.window.activeTextEditor;
+                if (activeEditor != null) {
+                    const currentLine = document.lineAt(activeEditor.selection.active.line)
+                    // console.log(document.languageId)
+                    // console.log(activeEditor.selection.active.line)
+                    // console.log(activeEditor.selection.active.character) //column
+                    // console.log(currentLine.lineNumber)
+                    // console.log(currentLine.range.end.character)
+                    // console.log(currentLine.range.end.line)
+                    // console.log(currentLine.range.isSingleLine)
+                    if (currentLine.text.length > 5 && (activeEditor.selection.active.character === currentLine.range.end.character) && currentLine.range.isSingleLine) {
+                        const expectedCode = await vscode.commands.executeCommand<string>("codesculptor.server.suggestCode", { text: currentLine.text, language: document.languageId })
+                        // const expectedCode:string =
+                        // `def bubble_sort(arr):
+                        //    n = len(arr)
+                        //    for i in range(n-1):
+                        //        for j in range(0, n-i-1):
+                        //            if arr[j] > arr[j+1]:
+                        //                arr[j], arr[j+1] = arr[j+1], arr[j]
+                        //    return arr
+                        //    `
+                        console.log(expectedCode.replaceAll("```\n", "").trim())
+                        inlineCommand = new vscode.InlineCompletionItem(expectedCode.replaceAll("```\n", "").trim(), currentLine.range)
 
+                        return [
+                            inlineCommand
+                        ]
+                    }
+                }
                 // return all completion items as array
-                return [
-                    inlineCommand
-                ];
+                return [];
             }
         })
     )
@@ -161,21 +189,25 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('codesculptor.startTask', () => {
         vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
-            title: "Loading Model!",
+            title: "Loading Model...",
             cancellable: true
         }, async (progress, token) => {
             token.onCancellationRequested(() => {
                 console.log("User canceled the long running operation");
             });
 
-            progress.report({ increment: 30 });
+            //progress.report({ increment: 30 });
 
             const p = new Promise<void>(async (resolve) => {
                 if (!client || client.state !== State.Running) {
                     await vscode.window.showErrorMessage("There is no language server running.")
                     return
                 }
+                //TODO: Uncomment the below line LoadModel
                 const result = await vscode.commands.executeCommand("initializeModel")
+
+                vscode.window.showInformationMessage("Code Sculptor activated!")
+                logger.info("Extension activated.")
                 return resolve()
             });
 
@@ -332,19 +364,59 @@ async function generateUnitTestCase() {
 
     const editor = vscode.window.activeTextEditor;
     const selection = editor?.selection;
+    const currentActiveFile = getCurrentFileDetails()
     if (selection && !selection.isEmpty) {
         const selectionRange = new vscode.Range(selection.start.line, selection.start.character, selection.end.line, selection.end.character);
         const highlighted = editor.document.getText(selectionRange);
         logger.info(highlighted)
 
         // Generate test case for selected text
-        const inputData:unknown = { text: highlighted, isSelection: true, language: 'python' }
-        const result = await vscode.commands.executeCommand("generateTestCase", inputData)
-        logger.info(JSON.stringify(result, undefined, 2))
-    } else {
 
-        const result = await vscode.commands.executeCommand("generateTestCase", { text: editor?.document.fileName, isSelection: false, language: 'python' })
-        logger.info(`codesculptor.generateTestCase result: ${JSON.stringify(result, undefined, 2)}`)
+        if (currentActiveFile) {
+
+            //TODO: Add loading menu to show that the test cases are generating
+            const inputData: unknown = { text: highlighted, isSelection: true, language: languages.get(currentActiveFile.extension) }
+            const result = await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
+            //TODO: Enable LoadModel in the above section where commands are registered
+
+            //const result = ' def test_add_numbers_positive_numbers():\r\n    result = add_numbers(1, 2)\r\n    assert result == 3\r\n\r\ndef test_add_numbers_negative_numbers():\r\n    result = add_numbers(-1, -2)\r\n    assert result == -3\r\n\r\ndef test_add_numbers_mixed_signs():\r\n    result = add_numbers(-1, 2)\r\n    assert result == 1\r\n\r\ndef test_add_numbers_zero():\r\n    result = add_numbers(0, 0)\r\n    assert result == 0\r\n\r\ndef test_add_numbers_floats():\r\n    result = add_numbers(1.5, 2.5)\r\n    assert result == 4\r\n\r\ndef test_add_numb… assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_3():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r\n\r\ndef test_add_numbers_large_negative_numbers_edge_case_3():\r\n    result = add_numbers(-1000000000000, -2000000000000)\r\n    assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_4():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r'
+            createNewFileWithContent(result, currentActiveFile)
+        }
+    } else {
+        if (editor && currentActiveFile) {
+            const result = await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", { text: editor.document.getText(), isSelection: false, language: languages.get(currentActiveFile.extension) })
+            //logger.info(`codesculptor.generateTestCase result: ${JSON.stringify(result, undefined, 2)}`)
+            createNewFileWithContent(result, currentActiveFile)
+        } else {
+            vscode.window.showErrorMessage("Error generating test case.")
+        }
+    }
+}
+
+function createNewFileWithContent(content: string, currentActiveFile: FileDetails) {
+    if (currentActiveFile) {
+        //Create new test file
+        const wsedit = new vscode.WorkspaceEdit();
+        //const wsPath = vscode.workspace.workspaceFolders![0].uri.fsPath; // gets the path of the first workspace folder
+        const newFilePath = vscode.Uri.file(currentActiveFile.folderPath + `${currentActiveFile.fileName}.test.${currentActiveFile.extension}`);
+        vscode.window.showInformationMessage(newFilePath.toString());
+        wsedit.createFile(newFilePath, { ignoreIfExists: true });
+        vscode.workspace.applyEdit(wsedit).then(value => {
+            vscode.window.showInformationMessage(`Created test file at ${currentActiveFile.fileName}.test.${currentActiveFile.extension}`);
+
+            //Edit the new file
+            vscode.workspace.openTextDocument(newFilePath).then(document => {
+                const edit = new vscode.WorkspaceEdit();
+                edit.insert(newFilePath, new vscode.Position(0, 0), content);
+                return vscode.workspace.applyEdit(edit).then(success => {
+                    if (success) {
+                        vscode.window.showTextDocument(document);
+                    } else {
+                        vscode.window.showInformationMessage('Error!');
+                    }
+                });
+            });
+        });
     }
 }
 
@@ -466,4 +538,40 @@ async function getPythonInterpreter(resource?: vscode.Uri): Promise<string | und
     }
 
     return pythonUri.fsPath
+}
+
+
+const loadLanguageMappingConfig = () => {
+    const fs = require('fs')
+    const filePath = path.resolve(__dirname, "../config/mapping.txt")
+    fs.readFile(filePath, 'utf8', function (err: any, data: string) {
+        if (err) throw err;
+        const temp = data.split(/\n/g)
+        languages = new Map()
+        temp.forEach(item => {
+            const mapping = item.replace(/(\r\n|\n|\r)/gm, "").split("=")
+            languages.set(mapping[0].trim(), mapping[1].trim())
+        })
+    });
+}
+
+const getCurrentFileDetails = (): FileDetails | null => {
+    const filePath = vscode.window.activeTextEditor?.document.fileName
+    if (filePath && /([^\\]*$)/gm.test(filePath)) {
+        const matches = /([^\\]*$)/gm.exec(filePath)
+        const fileNameMatches = /(.+?)(\.[^.]*$|$)/gm.exec(matches![1])
+        const folderPath = filePath.replace(matches![0], "")
+        const currentFileName = fileNameMatches![1]
+        const extension = fileNameMatches![2].replace(".", "")
+        return {
+            fileName: currentFileName,
+            extension: extension,
+            filePath: filePath,
+            folderPath: folderPath,
+            isActive: true
+        }
+    } else {
+        return null
+    }
+
 }

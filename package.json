@@ -35,6 +35,11 @@
         "category": "CodeSculptor"
       },
       {
+        "command": "codesculptor.explainCode",
+        "title": "CodeSculptor: Explain Code",
+        "category": "CodeSculptor"
+      },
+      {
 				"command": "codesculptor.startTask",
 				"title": "Load Model"
 			}
@@ -44,6 +49,11 @@
         {
           "command": "codesculptor.generateTestCase",
           "group": "CodeSculptor"
+        },
+        {
+          "command": "codesculptor.explainCode",
+          "group": "CodeSculptor",
+          "when": "editorHasSelection"
         }
       ]
     },

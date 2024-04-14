@@ -66,6 +66,18 @@ def SuggestCode(ls, *args):
     logger.debug(codeSuggestion)
     return codeSuggestion
 
+@server.command(
+    'codesculptor.server.explainCode'
+)
+def ExplainCode(ls, *args):
+    logger.debug("called Explain code function")
+    reqData = args[0]
+    logger.debug(f"Arguments of ReqData: ${reqData[0]}")
+    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("EXPLAIN_CODE").replace("{language}", reqData[0]["language"]),True, MODEL_CONFIG.config("EXPLAIN_CODE_SYSTEM_MAX_TOKENS"))
+    codeSuggestion = ComputeModelInformation(data)
+    logger.debug(codeSuggestion)
+    return codeSuggestion
+
 #@server.thread()
 @server.command(
     'codesculptor.server.initializeModel'

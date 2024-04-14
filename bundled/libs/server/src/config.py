@@ -4,6 +4,8 @@ class MODEL_CONFIG:
     "AUTOCOMPLETE_CODE_SYSTEM": "Review the shared code context to identify the {language} framework and just write the next lines of code without explanation about it.",
     "TEST_CASE_SYSTEM_MAX_TOKENS": 1024,
     "AUTOCOMPLETE_CODE_SYSTEM_MAX_TOKENS": 124,
+    "EXPLAIN_CODE": "Explain what the selected code does in simple terms for the {language} language. Assume the audience is a beginner programmer who has just learned the language features and basic syntax. Focus on explaining: 1) The purpose of the code 2) What input(s) it takes 3) What output(s) it produces 4) How it achieves its purpose through the logic and algorithm. 5) Any important logic flows or data transformations happening. Use simple language a beginner could understand. Include enough detail to give a full picture of what the code aims to accomplish without getting too technical. Format the explanation in coherent paragraphs, using proper punctuation and grammar. Write the explanation assuming no prior context about the code is known. Do not make assumptions about variables or functions not shown in the shared code. Start the answer with the name of the code that is being explained.",
+    "EXPLAIN_CODE_SYSTEM_MAX_TOKENS": 1024
   }
   # Reference: https://stackoverflow.com/questions/6198372/most-pythonic-way-to-provide-global-configuration-variables-in-config-py
   #__setters = ["username", "password"]

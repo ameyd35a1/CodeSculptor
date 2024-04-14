@@ -51,6 +51,13 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     )
 
+    // Explain the selected code
+    context.subscriptions.push(
+        vscode.commands.registerCommand("codesculptor.explainCode", async () => {
+            await explainCode()
+        })
+    )
+
     // Restart the language server if the user switches Python envs...
     context.subscriptions.push(
         python.environments.onDidChangeActiveEnvironmentPath(async () => {
@@ -355,6 +362,25 @@ async function executeServerCommand() {
 
     const result = await vscode.commands.executeCommand(commandName /* if your command accepts arguments you can pass them here */)
     logger.info(`${commandName} result: ${JSON.stringify(result, undefined, 2)}`)
+}
+
+async function explainCode() {
+    if (!client || client.state !== State.Running) {
+        await vscode.window.showErrorMessage("There is no language server running.")
+        return
+    }
+
+    const editor = vscode.window.activeTextEditor;
+    const selection = editor?.selection;
+    if (selection && !selection.isEmpty) {
+        const selectionRange = new vscode.Range(selection.start.line, selection.start.character, selection.end.line, selection.end.character);
+        const highlighted = editor.document.getText(selectionRange);
+        const inputData: unknown = { text: highlighted, isSelection: true, language: editor.document.languageId }
+        const result = await showProgressForCommand("Generating explanation...", "codesculptor.server.explainCode", "Successfully created explanation", "Explanation created", inputData)
+        
+        //TODO: Show the explained text in a proper window
+        console.log(result)
+    }
 }
 
 async function generateUnitTestCase() {

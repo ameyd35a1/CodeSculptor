@@ -187,32 +187,33 @@ export async function activate(context: vscode.ExtensionContext) {
     )
 
     context.subscriptions.push(vscode.commands.registerCommand('codesculptor.startTask', () => {
-        vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
-            title: "Loading Model...",
-            cancellable: true
-        }, async (progress, token) => {
-            token.onCancellationRequested(() => {
-                console.log("User canceled the long running operation");
-            });
+        showProgressForCommand("Loading Model...", "codesculptor.server.initializeModel", "Code Sculptor activated!", "Extension activated.")
+        // vscode.window.withProgress({
+        //     location: vscode.ProgressLocation.Notification,
+        //     title: "Loading Model...",
+        //     cancellable: true
+        // }, async (progress, token) => {
+        //     token.onCancellationRequested(() => {
+        //         console.log("User canceled the long running operation");
+        //     });
 
-            //progress.report({ increment: 30 });
+        //     //progress.report({ increment: 30 });
 
-            const p = new Promise<void>(async (resolve) => {
-                if (!client || client.state !== State.Running) {
-                    await vscode.window.showErrorMessage("There is no language server running.")
-                    return
-                }
-                //TODO: Uncomment the below line LoadModel
-                const result = await vscode.commands.executeCommand("initializeModel")
+        //     const p = new Promise<void>(async (resolve) => {
+        //         if (!client || client.state !== State.Running) {
+        //             await vscode.window.showErrorMessage("There is no language server running.")
+        //             return
+        //         }
+        //         //TODO: Uncomment the below line LoadModel
+        //         const result = await vscode.commands.executeCommand("codesculptor.server.initializeModel")
 
-                vscode.window.showInformationMessage("Code Sculptor activated!")
-                logger.info("Extension activated.")
-                return resolve()
-            });
+        //         vscode.window.showInformationMessage("Code Sculptor activated!")
+        //         logger.info("Extension activated.")
+        //         return resolve()
+        //     });
 
-            return p;
-        });
+        //     return p;
+        // });
     }));
 }
 
@@ -374,26 +375,60 @@ async function generateUnitTestCase() {
 
         if (currentActiveFile) {
 
-            //TODO: Add loading menu to show that the test cases are generating
+            //TODO: Add loading menu to show that the test cases are generating            
             const inputData: unknown = { text: highlighted, isSelection: true, language: languages.get(currentActiveFile.extension) }
-            const result = await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
+            const result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
+            //await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
             //TODO: Enable LoadModel in the above section where commands are registered
 
             //const result = ' def test_add_numbers_positive_numbers():\r\n    result = add_numbers(1, 2)\r\n    assert result == 3\r\n\r\ndef test_add_numbers_negative_numbers():\r\n    result = add_numbers(-1, -2)\r\n    assert result == -3\r\n\r\ndef test_add_numbers_mixed_signs():\r\n    result = add_numbers(-1, 2)\r\n    assert result == 1\r\n\r\ndef test_add_numbers_zero():\r\n    result = add_numbers(0, 0)\r\n    assert result == 0\r\n\r\ndef test_add_numbers_floats():\r\n    result = add_numbers(1.5, 2.5)\r\n    assert result == 4\r\n\r\ndef test_add_numb… assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_3():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r\n\r\ndef test_add_numbers_large_negative_numbers_edge_case_3():\r\n    result = add_numbers(-1000000000000, -2000000000000)\r\n    assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_4():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r'
-            createNewFileWithContent(result, currentActiveFile)
+            CreateNewFileWithContent(result, currentActiveFile)
         }
     } else {
         if (editor && currentActiveFile) {
-            const result = await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", { text: editor.document.getText(), isSelection: false, language: languages.get(currentActiveFile.extension) })
+            const inputData: unknown = { text: editor.document.getText(), isSelection: false, language: languages.get(currentActiveFile.extension) }
+            const result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
+            //await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
             //logger.info(`codesculptor.generateTestCase result: ${JSON.stringify(result, undefined, 2)}`)
-            createNewFileWithContent(result, currentActiveFile)
+            CreateNewFileWithContent(result, currentActiveFile)
         } else {
             vscode.window.showErrorMessage("Error generating test case.")
         }
     }
 }
 
-function createNewFileWithContent(content: string, currentActiveFile: FileDetails) {
+async function showProgressForCommand(title: string, command: string, completeMessage: string, logMessage: string, args: unknown = [])
+{
+    return vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: title,
+        cancellable: true
+    }, async (progress, token) => {
+        token.onCancellationRequested(() => {
+            console.log("User canceled the long running operation");
+        });
+
+        //progress.report({ increment: 30 });
+
+        const p = new Promise<string>(async (resolve) => {
+            if (!client || client.state !== State.Running) {
+                await vscode.window.showErrorMessage("There is no language server running.")
+                return
+            }
+            //TODO: Uncomment the below line LoadModel
+            const result = await vscode.commands.executeCommand<string>(command, args)
+
+            vscode.window.showInformationMessage(completeMessage)
+            logger.info(logMessage)
+            console.log(result)
+            return resolve(result)
+        });
+
+        return p;
+    });
+}
+
+function CreateNewFileWithContent(content: string, currentActiveFile: FileDetails) {
     if (currentActiveFile) {
         //Create new test file
         const wsedit = new vscode.WorkspaceEdit();

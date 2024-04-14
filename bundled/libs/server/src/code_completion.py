@@ -43,17 +43,28 @@ def Completions(params: CompletionParams):
 
 
 @server.command(
-    'generateTestCase'
+    'codesculptor.server.generateTestCase'
 )
 def GenerateTestCase(ls, *args):
-    logger.debug("called custom function")
+    logger.debug("called test case function")
     reqData = args[0]
     logger.debug(f"Arguments of ReqData: ${reqData[0]}")
-    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM").replace("{language}", "Python"),True)
+    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM").replace("{language}", reqData[0]["language"]),True, MODEL_CONFIG.config("TEST_CASE_SYSTEM_MAX_TOKENS"))
     testCase = ComputeModelInformation(data)
     logger.debug(testCase)
     return testCase
 
+@server.command(
+    'codesculptor.server.suggestCode'
+)
+def SuggestCode(ls, *args):
+    logger.debug("called suggest code function")
+    reqData = args[0]
+    logger.debug(f"Arguments of ReqData: ${reqData[0]}")
+    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("AUTOCOMPLETE_CODE_SYSTEM").replace("{language}", reqData[0]["language"]),True, MODEL_CONFIG.config("AUTOCOMPLETE_CODE_SYSTEM_MAX_TOKENS"))
+    codeSuggestion = ComputeModelInformation(data)
+    logger.debug(codeSuggestion)
+    return codeSuggestion
 
 #@server.thread()
 @server.command(

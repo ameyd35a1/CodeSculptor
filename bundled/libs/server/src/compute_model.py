@@ -47,13 +47,13 @@ def LoadModel():
         model_id,
         torch_dtype=torch.float16,
         quantization_config=bnb_config,
+        local_files_only=True
     )
     logger.debug("Model loaded")
 
 def ComputeModelInformation(data: ComputeData):
     global device
-    PROMPT = f"<s>[INST] <<SYS>>\n{data.system}\n<</SYS>>\n\n{data.message}[/INST]"
-    logger.debug(PROMPT)
+    PROMPT = f"<s>[INST] <<SYS>>\n{data.system}\n<</SYS>>\n\n{data.message}[/INST]"    
 
     logger.debug("Tokenizing input content")
     inputs = tokenizer(PROMPT, return_tensors="pt").to(device)
@@ -64,7 +64,7 @@ def ComputeModelInformation(data: ComputeData):
         input_ids= input_ids,
         attention_mask= inputs['attention_mask'],
         pad_token_id=tokenizer.eos_token_id,
-        max_new_tokens= 1024
+        max_new_tokens= data.maxTokens
     )
     
     logger.debug("Processing Output...")

@@ -33,13 +33,13 @@ logger.setLevel(logging.DEBUG)
    def completions(ls, params: CompletionParams):
        return CompletionList(is_incomplete=False, items=[CompletionItem("Completion 1")])
 '''
-@server.feature(
-TEXT_DOCUMENT_COMPLETION,
-CompletionOptions(trigger_characters=['.'])
-)
-def Completions(params: CompletionParams):
-    logger.debug("Entered Completion function!")
-    return CompletionList(is_incomplete=False, items=[CompletionItem("Completion 1")])
+# @server.feature(
+# TEXT_DOCUMENT_COMPLETION,
+# CompletionOptions(trigger_characters=['.'])
+# )
+# def Completions(params: CompletionParams):
+#     logger.debug("Entered Completion function!")
+#     return CompletionList(is_incomplete=False, items=[CompletionItem("Completion 1")])
 
 
 @server.command(

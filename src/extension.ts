@@ -110,48 +110,48 @@ export async function activate(context: vscode.ExtensionContext) {
         })
     )
 
-    context.subscriptions.push(
-        vscode.languages.registerCompletionItemProvider('plaintext', {
-            provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+    // context.subscriptions.push(
+    //     vscode.languages.registerCompletionItemProvider('plaintext', {
+    //         provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
 
-                // a simple completion item which inserts `Hello World!`
-                const simpleCompletion = new vscode.CompletionItem('Hello World!');
+    //             // a simple completion item which inserts `Hello World!`
+    //             const simpleCompletion = new vscode.CompletionItem('Hello World!');
 
-                // a completion item that inserts its text as snippet,
-                // the `insertText`-property is a `SnippetString` which will be
-                // honored by the editor.
-                const snippetCompletion = new vscode.CompletionItem('Good part of the day');
-                snippetCompletion.insertText = new vscode.SnippetString('Good ${1|morning,afternoon,evening|}. It is ${1}, right?');
-                const docs: any = new vscode.MarkdownString("Inserts a snippet that lets you select [link](x.ts).");
-                snippetCompletion.documentation = docs;
-                docs.baseUri = vscode.Uri.parse('http://example.com/a/b/c/');
+    //             // a completion item that inserts its text as snippet,
+    //             // the `insertText`-property is a `SnippetString` which will be
+    //             // honored by the editor.
+    //             const snippetCompletion = new vscode.CompletionItem('Good part of the day');
+    //             snippetCompletion.insertText = new vscode.SnippetString('Good ${1|morning,afternoon,evening|}. It is ${1}, right?');
+    //             const docs: any = new vscode.MarkdownString("Inserts a snippet that lets you select [link](x.ts).");
+    //             snippetCompletion.documentation = docs;
+    //             docs.baseUri = vscode.Uri.parse('http://example.com/a/b/c/');
 
-                // a completion item that can be accepted by a commit character,
-                // the `commitCharacters`-property is set which means that the completion will
-                // be inserted and then the character will be typed.
-                const commitCharacterCompletion = new vscode.CompletionItem('console');
-                commitCharacterCompletion.commitCharacters = ['.'];
-                commitCharacterCompletion.documentation = new vscode.MarkdownString('Press `.` to get `console.`');
+    //             // a completion item that can be accepted by a commit character,
+    //             // the `commitCharacters`-property is set which means that the completion will
+    //             // be inserted and then the character will be typed.
+    //             const commitCharacterCompletion = new vscode.CompletionItem('console');
+    //             commitCharacterCompletion.commitCharacters = ['.'];
+    //             commitCharacterCompletion.documentation = new vscode.MarkdownString('Press `.` to get `console.`');
 
-                // a completion item that retriggers IntelliSense when being accepted,
-                // the `command`-property is set which the editor will execute after 
-                // completion has been inserted. Also, the `insertText` is set so that 
-                // a space is inserted after `new`
-                const commandCompletion = new vscode.CompletionItem('new');
-                commandCompletion.kind = vscode.CompletionItemKind.Keyword;
-                commandCompletion.insertText = 'new ';
-                commandCompletion.command = { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions...' };
+    //             // a completion item that retriggers IntelliSense when being accepted,
+    //             // the `command`-property is set which the editor will execute after 
+    //             // completion has been inserted. Also, the `insertText` is set so that 
+    //             // a space is inserted after `new`
+    //             const commandCompletion = new vscode.CompletionItem('new');
+    //             commandCompletion.kind = vscode.CompletionItemKind.Keyword;
+    //             commandCompletion.insertText = 'new ';
+    //             commandCompletion.command = { command: 'editor.action.triggerSuggest', title: 'Re-trigger completions...' };
 
-                // return all completion items as array
-                return [
-                    simpleCompletion,
-                    snippetCompletion,
-                    commitCharacterCompletion,
-                    commandCompletion
-                ];
-            }
-        })
-    )
+    //             // return all completion items as array
+    //             return [
+    //                 simpleCompletion,
+    //                 snippetCompletion,
+    //                 commitCharacterCompletion,
+    //                 commandCompletion
+    //             ];
+    //         }
+    //     })
+    // )
 
     context.subscriptions.push(
         vscode.languages.registerInlineCompletionItemProvider('*', {
@@ -168,7 +168,7 @@ export async function activate(context: vscode.ExtensionContext) {
                     // console.log(currentLine.range.end.character)
                     // console.log(currentLine.range.end.line)
                     // console.log(currentLine.range.isSingleLine)
-                    if (currentLine.text.length > 5 && (activeEditor.selection.active.character === currentLine.range.end.character) && currentLine.range.isSingleLine) {
+                    if (currentLine.text.length > 10 && (activeEditor.selection.active.character === currentLine.range.end.character) && currentLine.range.isSingleLine) {
                         const expectedCode = await vscode.commands.executeCommand<string>("codesculptor.server.suggestCode", { text: currentLine.text, language: document.languageId })
                         // const expectedCode:string =
                         // `def bubble_sort(arr):
@@ -377,9 +377,14 @@ async function explainCode() {
         const highlighted = editor.document.getText(selectionRange);
         const inputData: unknown = { text: highlighted, isSelection: true, language: editor.document.languageId }
         const result = await showProgressForCommand("Generating explanation...", "codesculptor.server.explainCode", "Successfully created explanation", "Explanation created", inputData)
-        
+
         //TODO: Show the explained text in a proper window
         console.log(result)
+        let currentActiveFile = getCurrentFileDetails()
+        if (currentActiveFile) {
+            currentActiveFile!.extension = "txt"
+            CreateNewFileWithContent(result, currentActiveFile, "explain")
+        }
     }
 }
 
@@ -408,7 +413,7 @@ async function generateUnitTestCase() {
             //TODO: Enable LoadModel in the above section where commands are registered
 
             //const result = ' def test_add_numbers_positive_numbers():\r\n    result = add_numbers(1, 2)\r\n    assert result == 3\r\n\r\ndef test_add_numbers_negative_numbers():\r\n    result = add_numbers(-1, -2)\r\n    assert result == -3\r\n\r\ndef test_add_numbers_mixed_signs():\r\n    result = add_numbers(-1, 2)\r\n    assert result == 1\r\n\r\ndef test_add_numbers_zero():\r\n    result = add_numbers(0, 0)\r\n    assert result == 0\r\n\r\ndef test_add_numbers_floats():\r\n    result = add_numbers(1.5, 2.5)\r\n    assert result == 4\r\n\r\ndef test_add_numb… assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_3():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r\n\r\ndef test_add_numbers_large_negative_numbers_edge_case_3():\r\n    result = add_numbers(-1000000000000, -2000000000000)\r\n    assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_4():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r'
-            CreateNewFileWithContent(result, currentActiveFile)
+            CreateNewFileWithContent(result, currentActiveFile, "test")
         }
     } else {
         if (editor && currentActiveFile) {
@@ -416,15 +421,14 @@ async function generateUnitTestCase() {
             const result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
             //await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
             //logger.info(`codesculptor.generateTestCase result: ${JSON.stringify(result, undefined, 2)}`)
-            CreateNewFileWithContent(result, currentActiveFile)
+            CreateNewFileWithContent(result, currentActiveFile, "test")
         } else {
             vscode.window.showErrorMessage("Error generating test case.")
         }
     }
 }
 
-async function showProgressForCommand(title: string, command: string, completeMessage: string, logMessage: string, args: unknown = [])
-{
+async function showProgressForCommand(title: string, command: string, completeMessage: string, logMessage: string, args: unknown = []) {
     return vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
         title: title,
@@ -454,16 +458,16 @@ async function showProgressForCommand(title: string, command: string, completeMe
     });
 }
 
-function CreateNewFileWithContent(content: string, currentActiveFile: FileDetails) {
+function CreateNewFileWithContent(content: string, currentActiveFile: FileDetails, suffix: string) {
     if (currentActiveFile) {
         //Create new test file
         const wsedit = new vscode.WorkspaceEdit();
         //const wsPath = vscode.workspace.workspaceFolders![0].uri.fsPath; // gets the path of the first workspace folder
-        const newFilePath = vscode.Uri.file(currentActiveFile.folderPath + `${currentActiveFile.fileName}.test.${currentActiveFile.extension}`);
+        const newFilePath = vscode.Uri.file(currentActiveFile.folderPath + `${currentActiveFile.fileName}.${suffix}.${currentActiveFile.extension}`);
         vscode.window.showInformationMessage(newFilePath.toString());
         wsedit.createFile(newFilePath, { ignoreIfExists: true });
         vscode.workspace.applyEdit(wsedit).then(value => {
-            vscode.window.showInformationMessage(`Created test file at ${currentActiveFile.fileName}.test.${currentActiveFile.extension}`);
+            vscode.window.showInformationMessage(`Created test file at ${currentActiveFile.fileName}.${suffix}.${currentActiveFile.extension}`);
 
             //Edit the new file
             vscode.workspace.openTextDocument(newFilePath).then(document => {

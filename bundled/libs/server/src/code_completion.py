@@ -49,7 +49,12 @@ def GenerateTestCase(ls, *args):
     logger.debug("called test case function")
     reqData = args[0]
     logger.debug(f"Arguments of ReqData: ${reqData[0]}")
-    data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM").replace("{language}", reqData[0]["language"]),True, MODEL_CONFIG.config("TEST_CASE_SYSTEM_MAX_TOKENS"))
+    data = None
+    if(reqData[0]["isSelection"] is True):
+        data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM_SELECTED").replace("{language}", reqData[0]["language"]),True, MODEL_CONFIG.config("TEST_CASE_SYSTEM_MAX_TOKENS"))
+    else:
+        data = ComputeData(reqData[0]["text"], MODEL_CONFIG.config("TEST_CASE_SYSTEM_ALL").replace("{language}", reqData[0]["language"]),True, MODEL_CONFIG.config("TEST_CASE_SYSTEM_MAX_TOKENS"))
+    
     testCase = ComputeModelInformation(data)
     logger.debug(testCase)
     return testCase

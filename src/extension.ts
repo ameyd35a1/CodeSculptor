@@ -408,19 +408,18 @@ async function generateUnitTestCase() {
 
             //TODO: Add loading menu to show that the test cases are generating            
             const inputData: unknown = { text: highlighted, isSelection: true, language: languages.get(currentActiveFile.extension) }
-            const result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
+            let result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
             //await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
             //TODO: Enable LoadModel in the above section where commands are registered
-
+            result = formatResult(result)
             //const result = ' def test_add_numbers_positive_numbers():\r\n    result = add_numbers(1, 2)\r\n    assert result == 3\r\n\r\ndef test_add_numbers_negative_numbers():\r\n    result = add_numbers(-1, -2)\r\n    assert result == -3\r\n\r\ndef test_add_numbers_mixed_signs():\r\n    result = add_numbers(-1, 2)\r\n    assert result == 1\r\n\r\ndef test_add_numbers_zero():\r\n    result = add_numbers(0, 0)\r\n    assert result == 0\r\n\r\ndef test_add_numbers_floats():\r\n    result = add_numbers(1.5, 2.5)\r\n    assert result == 4\r\n\r\ndef test_add_numb… assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_3():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r\n\r\ndef test_add_numbers_large_negative_numbers_edge_case_3():\r\n    result = add_numbers(-1000000000000, -2000000000000)\r\n    assert result == -3000000000000\r\n\r\ndef test_add_numbers_large_positive_numbers_edge_case_4():\r\n    result = add_numbers(1000000000000, 2000000000000)\r\n    assert result == 3000000000000\r'
             CreateNewFileWithContent(result, currentActiveFile, "test")
         }
     } else {
         if (editor && currentActiveFile) {
             const inputData: unknown = { text: editor.document.getText(), isSelection: false, language: languages.get(currentActiveFile.extension) }
-            const result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
-            //await vscode.commands.executeCommand<string>("codesculptor.server.generateTestCase", inputData)
-            //logger.info(`codesculptor.generateTestCase result: ${JSON.stringify(result, undefined, 2)}`)
+            let result = await showProgressForCommand("Generating Test case...", "codesculptor.server.generateTestCase", "Successfully generated test cases", "Test cases created", inputData)
+            result = formatResult(result)
             CreateNewFileWithContent(result, currentActiveFile, "test")
         } else {
             vscode.window.showErrorMessage("Error generating test case.")
@@ -472,7 +471,7 @@ function CreateNewFileWithContent(content: string, currentActiveFile: FileDetail
             //Edit the new file
             vscode.workspace.openTextDocument(newFilePath).then(document => {
                 const edit = new vscode.WorkspaceEdit();
-                edit.insert(newFilePath, new vscode.Position(0, 0), content);
+                edit.insert(newFilePath, new vscode.Position(document.lineCount + 1, 0), content);
                 return vscode.workspace.applyEdit(edit).then(success => {
                     if (success) {
                         vscode.window.showTextDocument(document);
@@ -605,6 +604,16 @@ async function getPythonInterpreter(resource?: vscode.Uri): Promise<string | und
     return pythonUri.fsPath
 }
 
+const formatResult = (content: string): string => {
+    const matches = [...content.matchAll(/```/g)]
+    const indexes = matches.map(match => match.index);
+
+    let formattedContent = content
+    if(indexes.length === 2){
+        formattedContent = content.substring(indexes[0] + 3, indexes[1])
+    }
+    return formattedContent
+}
 
 const loadLanguageMappingConfig = () => {
     const fs = require('fs')

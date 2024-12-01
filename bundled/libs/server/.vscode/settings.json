@@ -20,7 +20,7 @@
     "python.testing.unittestArgs": [
         "-v",
         "-s",
-        ".",
+        "./workspace",
         "-p",
         "*test.py"
     ],

@@ -1,0 +1,23 @@
+ Bubble Sort
+
+The purpose of the code is to sort a list of numbers in ascending order using the bubble sort algorithm.
+
+Input: A list of numbers, for example [5, 2, 8, 3, 1, 6, 4]
+
+Output: A sorted list of numbers, for example [1, 2, 3, 4, 5, 6, 8]
+
+How it achieves its purpose:
+
+The code starts by defining a function called bubble_sort that takes a list of numbers as an argument. The function then uses a for loop to iterate through the list and compare each element to its neighbor. If the element is greater than its neighbor, the elements are swapped. This process continues until no more swaps are needed, which indicates that the list is sorted.
+
+The code uses a nested for loop to compare each element to its neighbor. The outer for loop iterates through the list and the inner for loop iterates through the remaining elements in the list. The if statement checks if the element is greater than its neighbor and if so, swaps the elements.
+
+The code also uses the len() function to get the length of the list and the range() function to create a range of numbers from 0 to the length of the list minus 1. This is used to iterate through the list and compare each element to its neighbor.
+
+Any important logic flows or data transformations happening:
+
+The code uses a simple algorithm called bubble sort to sort the list of numbers. Bubble sort is a simple sorting algorithm that works by comparing each element to its neighbor and swapping them if necessary. This process continues until the list is sorted.
+
+The code also uses the len() function to get the length of the list and the range() function to create a range of numbers from 0 to the length of the list minus 1. This is used to iterate through the list and compare each element to its neighbor.
+
+Overall, the code is a simple implementation of the bubble sort algorithm that takes a list of numbers as input and returns a sorted list of numbers.
